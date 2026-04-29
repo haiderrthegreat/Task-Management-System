@@ -1,0 +1,2574 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "TaskFlow API",
+    "version": "1.0.0",
+    "description": "Complete REST API for TaskFlow - Auth, Workspaces, Tasks, Comments, and Attachments.",
+    "contact": {
+      "name": "TaskFlow Support"
+    }
+  },
+  "servers": [
+    {
+      "url": "http://localhost:3000",
+      "description": "Local development server"
+    },
+    {
+      "url": "http://172.16.29.39:3000",
+      "description": "Network development server"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Health",
+      "description": "Service health check"
+    },
+    {
+      "name": "Auth",
+      "description": "Authentication endpoints"
+    },
+    {
+      "name": "Workspaces",
+      "description": "Workspace and member management endpoints"
+    },
+    {
+      "name": "Tasks",
+      "description": "Task CRUD, filtering, and assignee management"
+    },
+    {
+      "name": "Comments",
+      "description": "Task comment management"
+    },
+    {
+      "name": "Attachments",
+      "description": "Task file attachment upload, download, and management"
+    }
+  ],
+  "paths": {
+    "/health": {
+      "get": {
+        "tags": ["Health"],
+        "summary": "Check service health",
+        "responses": {
+          "200": {
+            "description": "Service is healthy",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                },
+                "example": {
+                  "success": true,
+                  "message": "Server is healthy",
+                  "timestamp": "2026-04-22T09:00:00.000Z"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/signup": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Create a new account",
+        "operationId": "signup",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SignupRequest"
+              },
+              "example": {
+                "name": "John Doe",
+                "email": "john@example.com",
+                "password": "Password123"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Account created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthSuccessResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Email already registered",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/login": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Sign in and receive tokens",
+        "operationId": "login",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginRequest"
+              },
+              "example": {
+                "email": "john@example.com",
+                "password": "Password123"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Login successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthSuccessResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid credentials",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/refresh": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Refresh the access token",
+        "operationId": "refreshToken",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RefreshRequest"
+              },
+              "example": {
+                "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Access token refreshed successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RefreshResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error or missing refresh token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid or expired refresh token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/logout": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Invalidate a refresh token",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LogoutRequest"
+              },
+              "example": {
+                "refreshToken": "eyJhbGciOiJIUzI1NiIs..."
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Logged out successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Refresh token missing or already invalidated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/workspaces": {
+      "post": {
+        "tags": ["Workspaces"],
+        "summary": "Create workspace",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateWorkspaceRequest"
+              },
+              "example": {
+                "name": "Design Team",
+                "description": "Workspace for product design"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Workspace created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkspaceResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": ["Workspaces"],
+        "summary": "Get all workspaces for logged-in user",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Workspaces fetched successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkspaceListResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/workspaces/{workspaceId}": {
+      "get": {
+        "tags": ["Workspaces"],
+        "summary": "Get single workspace",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/WorkspaceIdParam"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Workspace fetched successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkspaceDetailResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Workspace not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": ["Workspaces"],
+        "summary": "Update workspace",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/WorkspaceIdParam"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateWorkspaceRequest"
+              },
+              "example": {
+                "name": "Updated Workspace Name"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Workspace updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkspaceResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Only owner can update",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Workspace not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Workspaces"],
+        "summary": "Soft delete workspace",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/WorkspaceIdParam"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Workspace deleted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Only owner can delete",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Workspace not found or invited user is not signed up",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "User is already a workspace member",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/workspaces/{workspaceId}/invite": {
+      "post": {
+        "tags": ["Workspaces"],
+        "summary": "Send workspace invitation email",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/WorkspaceIdParam"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InviteMemberRequest"
+              },
+              "example": {
+                "email": "member@example.com"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Invitation email sent",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                },
+                "example": {
+                  "success": true,
+                  "message": "Invitation sent to member@example.com"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Only owner can invite members",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Workspace not found or invited user is not signed up",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "User is already a workspace member",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/workspaces/{workspaceId}/members": {
+      "delete": {
+        "tags": ["Workspaces"],
+        "summary": "Remove member from workspace",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/WorkspaceIdParam"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RemoveMemberRequest"
+              },
+              "example": {
+                "userId": "ckz7x4u3p0000abc12345"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Member removed successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request (owner self-removal or invalid input)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Only owner can remove members",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Workspace or membership not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/workspaces/{workspaceId}/members/{userId}/role": {
+      "patch": {
+        "tags": ["Workspaces"],
+        "summary": "Change member role",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/WorkspaceIdParam"
+          },
+          {
+            "$ref": "#/components/parameters/UserIdParam"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangeMemberRoleRequest"
+              },
+              "example": {
+                "role": "MEMBER"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Member role updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MemberRoleChangeResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request (invalid role or self role change)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Only owner can change member roles",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Workspace or membership not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/workspaces/accept-invite": {
+      "get": {
+        "tags": ["Workspaces"],
+        "summary": "Accept invitation from email link",
+        "parameters": [
+          {
+            "name": "token",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Signed invitation token from email"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Invitation accepted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AcceptInviteResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing, invalid, or expired invitation token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Workspace no longer exists or invited user is not signed up",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Workspaces"],
+        "summary": "Accept workspace invitation token",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AcceptInviteRequest"
+              },
+              "example": {
+                "token": "eyJhbGciOiJIUzI1NiIs..."
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Invitation accepted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AcceptInviteResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing, invalid, or expired invitation token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Invitation email does not match logged-in user",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Workspace no longer exists",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/workspaces/{workspaceId}/tasks": {
+      "post": {
+        "tags": ["Tasks"],
+        "summary": "Create task",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/WorkspaceIdParam"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateTaskRequest"
+              },
+              "example": {
+                "title": "Design login screen",
+                "description": "Create high-fidelity mockups",
+                "status": "TODO",
+                "priority": "HIGH",
+                "dueDate": "2026-05-01T12:00:00.000Z",
+                "assigneeIds": ["ckz7x4u3p0000user001"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Task created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not a workspace member",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": ["Tasks"],
+        "summary": "Get all tasks in workspace",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/WorkspaceIdParam"
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/TaskStatus"
+            }
+          },
+          {
+            "name": "priority",
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/TaskPriority"
+            }
+          },
+          {
+            "name": "assigneeId",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            }
+          },
+          {
+            "name": "sortBy",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": ["dueDate", "priority", "createdAt"],
+              "default": "createdAt"
+            }
+          },
+          {
+            "name": "sortOrder",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": ["asc", "desc"],
+              "default": "desc"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Tasks fetched successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskListResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not a workspace member",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/workspaces/{workspaceId}/tasks/{taskId}": {
+      "get": {
+        "tags": ["Tasks"],
+        "summary": "Get task by ID",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/WorkspaceIdParam"
+          },
+          {
+            "$ref": "#/components/parameters/TaskIdParam"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Task fetched successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Not a workspace member",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Task not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": ["Tasks"],
+        "summary": "Update task",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/WorkspaceIdParam"
+          },
+          {
+            "$ref": "#/components/parameters/TaskIdParam"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateTaskRequest"
+              },
+              "example": {
+                "status": "IN_PROGRESS",
+                "priority": "URGENT"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Task updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "No permission to update task",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Task not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Tasks"],
+        "summary": "Soft delete task",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/WorkspaceIdParam"
+          },
+          {
+            "$ref": "#/components/parameters/TaskIdParam"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Task deleted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "No permission to delete task",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Task not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/workspaces/{workspaceId}/tasks/{taskId}/assignees": {
+      "post": {
+        "tags": ["Tasks"],
+        "summary": "Assign user to task",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/WorkspaceIdParam"
+          },
+          {
+            "$ref": "#/components/parameters/TaskIdParam"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssignUserRequest"
+              },
+              "example": {
+                "userId": "ckz7x4u3p0000user001"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "User assigned to task successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskAssigneeResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Only workspace owner can assign users",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Task not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "User already assigned",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Tasks"],
+        "summary": "Remove assignee from task",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/WorkspaceIdParam"
+          },
+          {
+            "$ref": "#/components/parameters/TaskIdParam"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RemoveAssigneeRequest"
+              },
+              "example": {
+                "userId": "ckz7x4u3p0000user001"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Assignee removed successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Only workspace owner can remove assignees",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Task or assignee not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/workspaces/{workspaceId}/tasks/{taskId}/comments": {
+      "post": {
+        "tags": ["Comments"],
+        "summary": "Create comment on task",
+        "security": [{"bearerAuth": []}],
+        "parameters": [
+          {"$ref": "#/components/parameters/WorkspaceIdParam"},
+          {"$ref": "#/components/parameters/TaskIdParam"}
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {"$ref": "#/components/schemas/CreateCommentRequest"},
+              "example": {"content": "Great work on this!"}
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Comment created successfully",
+            "content": {"application/json": {"schema": {"$ref": "#/components/schemas/CommentResponse"}}}
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {"application/json": {"schema": {"$ref": "#/components/schemas/ErrorResponse"}}}
+          },
+          "403": {
+            "description": "Not a workspace member",
+            "content": {"application/json": {"schema": {"$ref": "#/components/schemas/ErrorResponse"}}}
+          },
+          "404": {
+            "description": "Task not found",
+            "content": {"application/json": {"schema": {"$ref": "#/components/schemas/ErrorResponse"}}}
+          },
+          "422": {
+            "description": "Validation failed",
+            "content": {"application/json": {"schema": {"$ref": "#/components/schemas/ErrorResponse"}}}
+          }
+        }
+      },
+      "get": {
+        "tags": ["Comments"],
+        "summary": "Get all comments on task",
+        "security": [{"bearerAuth": []}],
+        "parameters": [
+          {"$ref": "#/components/parameters/WorkspaceIdParam"},
+          {"$ref": "#/components/parameters/TaskIdParam"}
+        ],
+        "responses": {
+          "200": {
+            "description": "Comments fetched successfully",
+            "content": {"application/json": {"schema": {"$ref": "#/components/schemas/CommentListResponse"}}}
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {"application/json": {"schema": {"$ref": "#/components/schemas/ErrorResponse"}}}
+          },
+          "403": {
+            "description": "Not a workspace member",
+            "content": {"application/json": {"schema": {"$ref": "#/components/schemas/ErrorResponse"}}}
+          },
+          "404": {
+            "description": "Task not found",
+            "content": {"application/json": {"schema": {"$ref": "#/components/schemas/ErrorResponse"}}}
+          }
+        }
+      }
+    },
+    "/api/workspaces/{workspaceId}/tasks/{taskId}/comments/{commentId}": {
+      "patch": {
+        "tags": ["Comments"],
+        "summary": "Update comment",
+        "security": [{"bearerAuth": []}],
+        "parameters": [
+          {"$ref": "#/components/parameters/WorkspaceIdParam"},
+          {"$ref": "#/components/parameters/TaskIdParam"},
+          {"$ref": "#/components/parameters/CommentIdParam"}
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {"application/json": {"schema": {"$ref": "#/components/schemas/UpdateCommentRequest"}}}
+        },
+        "responses": {
+          "200": {
+            "description": "Comment updated successfully",
+            "content": {"application/json": {"schema": {"$ref": "#/components/schemas/CommentResponse"}}}
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {"application/json": {"schema": {"$ref": "#/components/schemas/ErrorResponse"}}}
+          },
+          "403": {
+            "description": "Only comment author can update",
+            "content": {"application/json": {"schema": {"$ref": "#/components/schemas/ErrorResponse"}}}
+          },
+          "404": {
+            "description": "Comment not found",
+            "content": {"application/json": {"schema": {"$ref": "#/components/schemas/ErrorResponse"}}}
+          },
+          "422": {
+            "description": "Validation failed",
+            "content": {"application/json": {"schema": {"$ref": "#/components/schemas/ErrorResponse"}}}
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Comments"],
+        "summary": "Delete comment",
+        "security": [{"bearerAuth": []}],
+        "parameters": [
+          {"$ref": "#/components/parameters/WorkspaceIdParam"},
+          {"$ref": "#/components/parameters/TaskIdParam"},
+          {"$ref": "#/components/parameters/CommentIdParam"}
+        ],
+        "responses": {
+          "200": {
+            "description": "Comment deleted successfully",
+            "content": {"application/json": {"schema": {"$ref": "#/components/schemas/SuccessResponse"}}}
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {"application/json": {"schema": {"$ref": "#/components/schemas/ErrorResponse"}}}
+          },
+          "403": {
+            "description": "Only comment author or workspace owner can delete",
+            "content": {"application/json": {"schema": {"$ref": "#/components/schemas/ErrorResponse"}}}
+          },
+          "404": {
+            "description": "Comment not found",
+            "content": {"application/json": {"schema": {"$ref": "#/components/schemas/ErrorResponse"}}}
+          }
+        }
+      }
+    },
+    "/api/workspaces/{workspaceId}/tasks/{taskId}/attachments": {
+      "post": {
+        "tags": ["Attachments"],
+        "summary": "Upload file attachment to task",
+        "security": [{"bearerAuth": []}],
+        "parameters": [
+          {"$ref": "#/components/parameters/WorkspaceIdParam"},
+          {"$ref": "#/components/parameters/TaskIdParam"}
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {"type": "string", "format": "binary", "description": "File to upload"}
+                },
+                "required": ["file"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "File uploaded successfully",
+            "content": {"application/json": {"schema": {"$ref": "#/components/schemas/AttachmentResponse"}}}
+          },
+          "400": {
+            "description": "No file uploaded",
+            "content": {"application/json": {"schema": {"$ref": "#/components/schemas/ErrorResponse"}}}
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {"application/json": {"schema": {"$ref": "#/components/schemas/ErrorResponse"}}}
+          },
+          "403": {
+            "description": "Not a workspace member",
+            "content": {"application/json": {"schema": {"$ref": "#/components/schemas/ErrorResponse"}}}
+          },
+          "404": {
+            "description": "Task not found",
+            "content": {"application/json": {"schema": {"$ref": "#/components/schemas/ErrorResponse"}}}
+          }
+        }
+      },
+      "get": {
+        "tags": ["Attachments"],
+        "summary": "Get all attachments on task",
+        "security": [{"bearerAuth": []}],
+        "parameters": [
+          {"$ref": "#/components/parameters/WorkspaceIdParam"},
+          {"$ref": "#/components/parameters/TaskIdParam"}
+        ],
+        "responses": {
+          "200": {
+            "description": "Attachments fetched successfully",
+            "content": {"application/json": {"schema": {"$ref": "#/components/schemas/AttachmentListResponse"}}}
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {"application/json": {"schema": {"$ref": "#/components/schemas/ErrorResponse"}}}
+          },
+          "403": {
+            "description": "Not a workspace member",
+            "content": {"application/json": {"schema": {"$ref": "#/components/schemas/ErrorResponse"}}}
+          },
+          "404": {
+            "description": "Task not found",
+            "content": {"application/json": {"schema": {"$ref": "#/components/schemas/ErrorResponse"}}}
+          }
+        }
+      }
+    },
+    "/api/workspaces/{workspaceId}/tasks/{taskId}/attachments/{attachmentId}/download": {
+      "get": {
+        "tags": ["Attachments"],
+        "summary": "Download attachment file",
+        "security": [{"bearerAuth": []}],
+        "parameters": [
+          {"$ref": "#/components/parameters/WorkspaceIdParam"},
+          {"$ref": "#/components/parameters/TaskIdParam"},
+          {"$ref": "#/components/parameters/AttachmentIdParam"}
+        ],
+        "responses": {
+          "200": {
+            "description": "File downloaded",
+            "content": {"application/octet-stream": {"schema": {"type": "string", "format": "binary"}}}
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {"application/json": {"schema": {"$ref": "#/components/schemas/ErrorResponse"}}}
+          },
+          "403": {
+            "description": "Not a workspace member",
+            "content": {"application/json": {"schema": {"$ref": "#/components/schemas/ErrorResponse"}}}
+          },
+          "404": {
+            "description": "Attachment not found",
+            "content": {"application/json": {"schema": {"$ref": "#/components/schemas/ErrorResponse"}}}
+          }
+        }
+      }
+    },
+    "/api/workspaces/{workspaceId}/tasks/{taskId}/attachments/{attachmentId}": {
+      "delete": {
+        "tags": ["Attachments"],
+        "summary": "Delete attachment",
+        "security": [{"bearerAuth": []}],
+        "parameters": [
+          {"$ref": "#/components/parameters/WorkspaceIdParam"},
+          {"$ref": "#/components/parameters/TaskIdParam"},
+          {"$ref": "#/components/parameters/AttachmentIdParam"}
+        ],
+        "responses": {
+          "200": {
+            "description": "Attachment deleted successfully",
+            "content": {"application/json": {"schema": {"$ref": "#/components/schemas/SuccessResponse"}}}
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {"application/json": {"schema": {"$ref": "#/components/schemas/ErrorResponse"}}}
+          },
+          "403": {
+            "description": "Only uploader or workspace owner can delete",
+            "content": {"application/json": {"schema": {"$ref": "#/components/schemas/ErrorResponse"}}}
+          },
+          "404": {
+            "description": "Attachment not found",
+            "content": {"application/json": {"schema": {"$ref": "#/components/schemas/ErrorResponse"}}}
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "Use access token from /api/auth/login. Example: Bearer <token>"
+      }
+    },
+    "parameters": {
+      "WorkspaceIdParam": {
+        "name": "workspaceId",
+        "in": "path",
+        "required": true,
+        "schema": {
+          "type": "string"
+        },
+        "description": "Workspace ID"
+      },
+      "UserIdParam": {
+        "name": "userId",
+        "in": "path",
+        "required": true,
+        "schema": {
+          "type": "string"
+        },
+        "description": "User ID"
+      },
+      "TaskIdParam": {
+        "name": "taskId",
+        "in": "path",
+        "required": true,
+        "schema": {
+          "type": "string"
+        },
+        "description": "Task ID"
+      },
+      "CommentIdParam": {
+        "name": "commentId",
+        "in": "path",
+        "required": true,
+        "schema": {
+          "type": "string"
+        },
+        "description": "Comment ID"
+      },
+      "AttachmentIdParam": {
+        "name": "attachmentId",
+        "in": "path",
+        "required": true,
+        "schema": {
+          "type": "string"
+        },
+        "description": "Attachment ID"
+      }
+    },
+    "schemas": {
+      "HealthResponse": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean", "example": true },
+          "message": { "type": "string", "example": "Server is healthy" },
+          "timestamp": { "type": "string", "format": "date-time" }
+        },
+        "required": ["success", "message", "timestamp"]
+      },
+      "SuccessResponse": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean", "example": true },
+          "message": { "type": "string" }
+        },
+        "required": ["success", "message"]
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "success": { "type": "boolean", "example": false },
+          "message": { "type": "string" },
+          "errors": {
+            "oneOf": [
+              { "type": "object" },
+              { "type": "array", "items": {} },
+              { "type": "string" }
+            ]
+          }
+        },
+        "required": ["success", "message"]
+      },
+      "User": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "example": "ckz7x4u3p0000abc12345" },
+          "name": { "type": "string", "example": "John Doe" },
+          "email": { "type": "string", "format": "email", "example": "john@example.com" },
+          "createdAt": { "type": "string", "format": "date-time" }
+        },
+        "required": ["id", "name", "email", "createdAt"]
+      },
+      "AuthData": {
+        "type": "object",
+        "properties": {
+          "user": { "$ref": "#/components/schemas/User" },
+          "accessToken": { "type": "string" },
+          "refreshToken": { "type": "string" }
+        },
+        "required": ["user", "accessToken", "refreshToken"]
+      },
+      "AuthSuccessResponse": {
+        "allOf": [
+          { "$ref": "#/components/schemas/SuccessResponse" },
+          {
+            "type": "object",
+            "properties": {
+              "data": { "$ref": "#/components/schemas/AuthData" }
+            },
+            "required": ["data"]
+          }
+        ]
+      },
+      "RefreshResponse": {
+        "allOf": [
+          { "$ref": "#/components/schemas/SuccessResponse" },
+          {
+            "type": "object",
+            "properties": {
+              "data": {
+                "type": "object",
+                "properties": {
+                  "accessToken": { "type": "string" }
+                },
+                "required": ["accessToken"]
+              }
+            },
+            "required": ["data"]
+          }
+        ]
+      },
+      "SignupRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 100,
+            "example": "John Doe"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "example": "john@example.com"
+          },
+          "password": {
+            "type": "string",
+            "minLength": 8,
+            "maxLength": 128,
+            "description": "Must contain uppercase, lowercase, and a number",
+            "example": "Password123"
+          }
+        },
+        "required": ["name", "email", "password"]
+      },
+      "LoginRequest": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "example": "john@example.com"
+          },
+          "password": {
+            "type": "string",
+            "example": "Password123"
+          }
+        },
+        "required": ["email", "password"]
+      },
+      "RefreshRequest": {
+        "type": "object",
+        "properties": {
+          "refreshToken": {
+            "type": "string",
+            "example": "eyJhbGciOiJIUzI1NiIs..."
+          }
+        },
+        "required": ["refreshToken"]
+      },
+      "LogoutRequest": {
+        "type": "object",
+        "properties": {
+          "refreshToken": {
+            "type": "string",
+            "example": "eyJhbGciOiJIUzI1NiIs..."
+          }
+        },
+        "required": ["refreshToken"]
+      },
+      "Workspace": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "example": "ckz7x4u3p0000abc12345" },
+          "name": { "type": "string", "example": "Design Team" },
+          "description": { "type": "string", "nullable": true, "example": "Workspace for product design" },
+          "ownerId": { "type": "string", "example": "ckz7x4u3p0000owner123" },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time" },
+          "deletedAt": { "type": "string", "format": "date-time", "nullable": true }
+        },
+        "required": ["id", "name", "ownerId", "createdAt", "updatedAt"]
+      },
+      "WorkspaceSummary": {
+        "allOf": [
+          { "$ref": "#/components/schemas/Workspace" },
+          {
+            "type": "object",
+            "properties": {
+              "role": {
+                "type": "string",
+                "enum": ["OWNER", "MEMBER"],
+                "example": "OWNER"
+              },
+              "joinedAt": {
+                "type": "string",
+                "format": "date-time"
+              }
+            },
+            "required": ["role", "joinedAt"]
+          }
+        ]
+      },
+      "WorkspaceMember": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "example": "ckz7x4u3p0000member001" },
+          "role": {
+            "type": "string",
+            "enum": ["OWNER", "MEMBER"],
+            "example": "MEMBER"
+          },
+          "joinedAt": { "type": "string", "format": "date-time" },
+          "user": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string", "example": "ckz7x4u3p0000user001" },
+              "name": { "type": "string", "example": "Jane Member" },
+              "email": { "type": "string", "format": "email", "example": "member@example.com" },
+              "createdAt": { "type": "string", "format": "date-time" }
+            },
+            "required": ["id", "name", "email"]
+          }
+        },
+        "required": ["id", "role", "joinedAt", "user"]
+      },
+      "WorkspaceDetail": {
+        "allOf": [
+          { "$ref": "#/components/schemas/Workspace" },
+          {
+            "type": "object",
+            "properties": {
+              "role": {
+                "type": "string",
+                "enum": ["OWNER", "MEMBER"],
+                "example": "OWNER"
+              },
+              "members": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/WorkspaceMember"
+                }
+              }
+            },
+            "required": ["role", "members"]
+          }
+        ]
+      },
+      "WorkspaceResponse": {
+        "allOf": [
+          { "$ref": "#/components/schemas/SuccessResponse" },
+          {
+            "type": "object",
+            "properties": {
+              "data": {
+                "$ref": "#/components/schemas/Workspace"
+              }
+            },
+            "required": ["data"]
+          }
+        ]
+      },
+      "WorkspaceListResponse": {
+        "allOf": [
+          { "$ref": "#/components/schemas/SuccessResponse" },
+          {
+            "type": "object",
+            "properties": {
+              "data": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/WorkspaceSummary"
+                }
+              }
+            },
+            "required": ["data"]
+          }
+        ]
+      },
+      "WorkspaceDetailResponse": {
+        "allOf": [
+          { "$ref": "#/components/schemas/SuccessResponse" },
+          {
+            "type": "object",
+            "properties": {
+              "data": {
+                "$ref": "#/components/schemas/WorkspaceDetail"
+              }
+            },
+            "required": ["data"]
+          }
+        ]
+      },
+      "WorkspaceMemberResponse": {
+        "allOf": [
+          { "$ref": "#/components/schemas/SuccessResponse" },
+          {
+            "type": "object",
+            "properties": {
+              "data": {
+                "$ref": "#/components/schemas/WorkspaceMember"
+              }
+            },
+            "required": ["data"]
+          }
+        ]
+      },
+      "MemberRoleChangeData": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "example": "ckz7x4u3p0000member001" },
+          "role": {
+            "type": "string",
+            "enum": ["OWNER", "MEMBER"],
+            "example": "MEMBER"
+          },
+          "user": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string", "example": "ckz7x4u3p0000user001" },
+              "name": { "type": "string", "example": "Jane Member" },
+              "email": { "type": "string", "format": "email", "example": "member@example.com" }
+            },
+            "required": ["id", "name", "email"]
+          }
+        },
+        "required": ["id", "role", "user"]
+      },
+      "MemberRoleChangeResponse": {
+        "allOf": [
+          { "$ref": "#/components/schemas/SuccessResponse" },
+          {
+            "type": "object",
+            "properties": {
+              "data": {
+                "$ref": "#/components/schemas/MemberRoleChangeData"
+              }
+            },
+            "required": ["data"]
+          }
+        ]
+      },
+      "AcceptInviteResponse": {
+        "allOf": [
+          { "$ref": "#/components/schemas/SuccessResponse" },
+          {
+            "type": "object",
+            "properties": {
+              "data": {
+                "oneOf": [
+                  {
+                    "$ref": "#/components/schemas/MemberRoleChangeData"
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "message": {
+                        "type": "string",
+                        "example": "You are already a member of this workspace"
+                      }
+                    },
+                    "required": ["message"]
+                  }
+                ]
+              }
+            },
+            "required": ["data"]
+          }
+        ]
+      },
+      "CreateWorkspaceRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 100
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 500
+          }
+        },
+        "required": ["name"]
+      },
+      "UpdateWorkspaceRequest": {
+        "type": "object",
+        "minProperties": 1,
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 100
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 500
+          }
+        }
+      },
+      "InviteMemberRequest": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email"
+          }
+        },
+        "required": ["email"]
+      },
+      "AcceptInviteRequest": {
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string"
+          }
+        },
+        "required": ["token"]
+      },
+      "RemoveMemberRequest": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string"
+          }
+        },
+        "required": ["userId"]
+      },
+      "ChangeMemberRoleRequest": {
+        "type": "object",
+        "properties": {
+          "role": {
+            "type": "string",
+            "enum": ["MEMBER", "OWNER"]
+          }
+        },
+        "required": ["role"]
+      },
+      "TaskStatus": {
+        "type": "string",
+        "enum": ["TODO", "IN_PROGRESS", "IN_REVIEW", "DONE"]
+      },
+      "TaskPriority": {
+        "type": "string",
+        "enum": ["LOW", "MEDIUM", "HIGH", "URGENT"]
+      },
+      "TaskUser": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "example": "ckz7x4u3p0000user001" },
+          "name": { "type": "string", "example": "Jane Member" },
+          "email": { "type": "string", "format": "email", "example": "member@example.com" }
+        },
+        "required": ["id", "name", "email"]
+      },
+      "TaskAssignee": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "example": "ckz7x4u3p0000assign001" },
+          "taskId": { "type": "string", "example": "ckz7x4u3p0000task001" },
+          "userId": { "type": "string", "example": "ckz7x4u3p0000user001" },
+          "assignedAt": { "type": "string", "format": "date-time" },
+          "user": { "$ref": "#/components/schemas/TaskUser" }
+        },
+        "required": ["id", "taskId", "userId", "assignedAt", "user"]
+      },
+      "Task": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "example": "ckz7x4u3p0000task001" },
+          "title": { "type": "string", "example": "Design login screen" },
+          "description": { "type": "string", "nullable": true, "example": "Create high-fidelity mockups" },
+          "status": { "$ref": "#/components/schemas/TaskStatus" },
+          "priority": { "$ref": "#/components/schemas/TaskPriority" },
+          "dueDate": { "type": "string", "format": "date-time", "nullable": true },
+          "workspaceId": { "type": "string", "example": "ckz7x4u3p0000ws001" },
+          "createdById": { "type": "string", "example": "ckz7x4u3p0000owner001" },
+          "deletedAt": { "type": "string", "format": "date-time", "nullable": true },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time" },
+          "createdBy": { "$ref": "#/components/schemas/TaskUser" },
+          "assignees": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TaskAssignee"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "status",
+          "priority",
+          "workspaceId",
+          "createdById",
+          "createdAt",
+          "updatedAt",
+          "createdBy",
+          "assignees"
+        ]
+      },
+      "TaskPagination": {
+        "type": "object",
+        "properties": {
+          "hasNextPage": { "type": "boolean", "example": true },
+          "nextCursor": { "type": "string", "nullable": true, "example": "ckz7x4u3p0000task010" },
+          "limit": { "type": "integer", "example": 20 }
+        },
+        "required": ["hasNextPage", "nextCursor", "limit"]
+      },
+      "TaskListData": {
+        "type": "object",
+        "properties": {
+          "tasks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Task"
+            }
+          },
+          "pagination": {
+            "$ref": "#/components/schemas/TaskPagination"
+          }
+        },
+        "required": ["tasks", "pagination"]
+      },
+      "TaskResponse": {
+        "allOf": [
+          { "$ref": "#/components/schemas/SuccessResponse" },
+          {
+            "type": "object",
+            "properties": {
+              "data": {
+                "$ref": "#/components/schemas/Task"
+              }
+            },
+            "required": ["data"]
+          }
+        ]
+      },
+      "TaskListResponse": {
+        "allOf": [
+          { "$ref": "#/components/schemas/SuccessResponse" },
+          {
+            "type": "object",
+            "properties": {
+              "data": {
+                "$ref": "#/components/schemas/TaskListData"
+              }
+            },
+            "required": ["data"]
+          }
+        ]
+      },
+      "TaskAssigneeResponse": {
+        "allOf": [
+          { "$ref": "#/components/schemas/SuccessResponse" },
+          {
+            "type": "object",
+            "properties": {
+              "data": {
+                "$ref": "#/components/schemas/TaskAssignee"
+              }
+            },
+            "required": ["data"]
+          }
+        ]
+      },
+      "CreateTaskRequest": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 255
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 5000
+          },
+          "status": {
+            "$ref": "#/components/schemas/TaskStatus"
+          },
+          "priority": {
+            "$ref": "#/components/schemas/TaskPriority"
+          },
+          "dueDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "assigneeIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "default": []
+          }
+        },
+        "required": ["title"]
+      },
+      "UpdateTaskRequest": {
+        "type": "object",
+        "minProperties": 1,
+        "properties": {
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 255
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 5000,
+            "nullable": true
+          },
+          "status": {
+            "$ref": "#/components/schemas/TaskStatus"
+          },
+          "priority": {
+            "$ref": "#/components/schemas/TaskPriority"
+          },
+          "dueDate": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        }
+      },
+      "AssignUserRequest": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string"
+          }
+        },
+        "required": ["userId"]
+      },
+      "RemoveAssigneeRequest": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string"
+          }
+        },
+        "required": ["userId"]
+      },
+      "Comment": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "example": "ckz7x4u3p0000comment001" },
+          "content": { "type": "string", "example": "This looks great!" },
+          "taskId": { "type": "string", "example": "ckz7x4u3p0000task001" },
+          "createdById": { "type": "string", "example": "ckz7x4u3p0000user001" },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time" },
+          "createdBy": { "$ref": "#/components/schemas/TaskUser" }
+        },
+        "required": ["id", "content", "taskId", "createdById", "createdAt", "updatedAt", "createdBy"]
+      },
+      "CommentResponse": {
+        "allOf": [
+          { "$ref": "#/components/schemas/SuccessResponse" },
+          {
+            "type": "object",
+            "properties": {
+              "data": {
+                "$ref": "#/components/schemas/Comment"
+              }
+            },
+            "required": ["data"]
+          }
+        ]
+      },
+      "CommentListResponse": {
+        "allOf": [
+          { "$ref": "#/components/schemas/SuccessResponse" },
+          {
+            "type": "object",
+            "properties": {
+              "data": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/Comment"
+                }
+              }
+            },
+            "required": ["data"]
+          }
+        ]
+      },
+      "CreateCommentRequest": {
+        "type": "object",
+        "properties": {
+          "content": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2000
+          }
+        },
+        "required": ["content"]
+      },
+      "UpdateCommentRequest": {
+        "type": "object",
+        "properties": {
+          "content": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2000
+          }
+        },
+        "required": ["content"]
+      },
+      "Attachment": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "example": "ckz7x4u3p0000attach001" },
+          "originalName": { "type": "string", "example": "document.pdf" },
+          "mimeType": { "type": "string", "example": "application/pdf" },
+          "fileSize": { "type": "integer", "example": 1024000 },
+          "taskId": { "type": "string", "example": "ckz7x4u3p0000task001" },
+          "uploadedById": { "type": "string", "example": "ckz7x4u3p0000user001" },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "uploadedBy": { "$ref": "#/components/schemas/TaskUser" }
+        },
+        "required": ["id", "originalName", "mimeType", "fileSize", "taskId", "uploadedById", "createdAt", "uploadedBy"]
+      },
+      "AttachmentResponse": {
+        "allOf": [
+          { "$ref": "#/components/schemas/SuccessResponse" },
+          {
+            "type": "object",
+            "properties": {
+              "data": {
+                "$ref": "#/components/schemas/Attachment"
+              }
+            },
+            "required": ["data"]
+          }
+        ]
+      },
+      "AttachmentListResponse": {
+        "allOf": [
+          { "$ref": "#/components/schemas/SuccessResponse" },
+          {
+            "type": "object",
+            "properties": {
+              "data": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/Attachment"
+                }
+              }
+            },
+            "required": ["data"]
+          }
+        ]
+      }
+    }
+  }
+}
