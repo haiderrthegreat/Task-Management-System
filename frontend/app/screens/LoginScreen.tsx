@@ -71,7 +71,7 @@ const LoginScreen = ({ navigation }: LoginScreenProps) => {
         <View style={styles.content}>
           <Text style={styles.brand}>TaskFlow</Text>
           <Text style={styles.subtitle}>
-            Sign in to continue managing your tasks
+            Sign in to continue managing your tasks 
           </Text>
 
           <TextInput
