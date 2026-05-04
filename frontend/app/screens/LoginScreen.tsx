@@ -1,5 +1,5 @@
-import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { useState } from 'react';
+import { NativeStackScreenProps } from "@react-navigation/native-stack";
+import { useState } from "react";
 import {
   ActivityIndicator,
   StyleSheet,
@@ -8,28 +8,28 @@ import {
   View,
   SafeAreaView,
   TouchableOpacity,
-} from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+} from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
-import Screen from '../components/Screen';
-import { RootStackParamList } from '../navigation/types';
-import { getApiErrorMessage, useLoginMutation } from '../store/api';
-import { useAppDispatch } from '../store/hooks';
-import { setToken, setUser } from '../store/slices/authSlice';
+import Screen from "../components/Screen";
+import { RootStackParamList } from "../navigation/types";
+import { getApiErrorMessage, useLoginMutation } from "../store/api";
+import { useAppDispatch } from "../store/hooks";
+import { setToken, setUser } from "../store/slices/authSlice";
 
-type LoginScreenProps = NativeStackScreenProps<RootStackParamList, 'Login'>;
+type LoginScreenProps = NativeStackScreenProps<RootStackParamList>;
 
 const LoginScreen = ({ navigation }: LoginScreenProps) => {
   const dispatch = useAppDispatch();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [login] = useLoginMutation();
 
   const validate = () => {
     if (!email.trim() || !password.trim()) {
-      setErrorMessage('Email and password are required.');
+      setErrorMessage("Email and password are required.");
       return false;
     }
 
@@ -50,16 +50,16 @@ const LoginScreen = ({ navigation }: LoginScreenProps) => {
       const response = await login(payload).unwrap();
 
       await Promise.all([
-        AsyncStorage.setItem('user', JSON.stringify(response?.user ?? null)),
-        AsyncStorage.setItem('token', response?.accessToken ?? ''),
-        AsyncStorage.setItem('refreshToken', response?.refreshToken ?? ''),
+        AsyncStorage.setItem("user", JSON.stringify(response?.user ?? null)),
+        AsyncStorage.setItem("token", response?.accessToken ?? ""),
+        AsyncStorage.setItem("refreshToken", response?.refreshToken ?? ""),
       ]);
 
       dispatch(setUser(response?.user ?? null));
       dispatch(setToken(response?.accessToken ?? null));
-      navigation.replace('MainTabs');
+      navigation.replace("MainTabs");
     } catch (error) {
-      setErrorMessage(getApiErrorMessage(error, 'Unable to login right now.'));
+      setErrorMessage(getApiErrorMessage(error, "Unable to login right now."));
     } finally {
       setLoading(false);
     }
@@ -71,7 +71,7 @@ const LoginScreen = ({ navigation }: LoginScreenProps) => {
         <View style={styles.content}>
           <Text style={styles.brand}>TaskFlow</Text>
           <Text style={styles.subtitle}>
-            Sign in to continue managing your tasks 
+            Sign in to continue managing your tasks
           </Text>
 
           <TextInput
@@ -92,7 +92,9 @@ const LoginScreen = ({ navigation }: LoginScreenProps) => {
             onChangeText={setPassword}
           />
 
-          {errorMessage ? <Text style={styles.errorText}>{errorMessage}</Text> : null}
+          {errorMessage ? (
+            <Text style={styles.errorText}>{errorMessage}</Text>
+          ) : null}
 
           <TouchableOpacity
             style={[styles.primaryBtn, loading && styles.primaryBtnDisabled]}
@@ -108,7 +110,7 @@ const LoginScreen = ({ navigation }: LoginScreenProps) => {
 
           <TouchableOpacity
             style={styles.textBtn}
-            onPress={() => navigation.navigate('SignUp')}
+            onPress={() => navigation.navigate("SignUp")}
           >
             <Text style={styles.textBtnLabel}>
               Don’t have an account? Sign Up
@@ -123,64 +125,64 @@ const LoginScreen = ({ navigation }: LoginScreenProps) => {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: "#F8FAFC",
   },
   container: {
-    flex: 1,
-    justifyContent: 'center',
+    // flex: 1,
+    justifyContent: "center",
   },
   content: {
     paddingHorizontal: 20, // ✅ horizontal spacing fixed
   },
   brand: {
     fontSize: 22,
-    fontWeight: '800',
-    color: '#0F766E',
+    fontWeight: "800",
+    color: "#0F766E",
     letterSpacing: 1,
     marginBottom: 8,
   },
   subtitle: {
-    color: '#64748B',
+    color: "#64748B",
     marginBottom: 28,
     fontSize: 14,
   },
   input: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: "#FFFFFF",
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: "#E2E8F0",
     borderRadius: 12,
     paddingHorizontal: 14,
     paddingVertical: 13,
     marginBottom: 14,
-    color: '#0F172A',
+    color: "#0F172A",
   },
   errorText: {
-    color: '#B91C1C',
+    color: "#B91C1C",
     marginBottom: 12,
     fontSize: 13,
   },
   primaryBtn: {
     marginTop: 10,
-    backgroundColor: '#0F766E',
+    backgroundColor: "#0F766E",
     borderRadius: 12,
     paddingVertical: 15,
-    alignItems: 'center',
+    alignItems: "center",
   },
   primaryBtnDisabled: {
     opacity: 0.7,
   },
   primaryBtnText: {
-    color: '#FFFFFF',
-    fontWeight: '700',
+    color: "#FFFFFF",
+    fontWeight: "700",
     fontSize: 15,
   },
   textBtn: {
     marginTop: 16,
-    alignItems: 'center',
+    alignItems: "center",
   },
   textBtnLabel: {
-    color: '#0F766E',
-    fontWeight: '600',
+    color: "#0F766E",
+    fontWeight: "600",
   },
 });
 

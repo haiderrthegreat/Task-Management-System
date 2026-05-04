@@ -30,6 +30,10 @@ export type RootStackParamList = {
   Details: { taskId: string; workspaceId: string };
   Comments: { taskId: string };
   FilterSearch: undefined;
-  FileAttachments: { taskId: string };
+  FileAttachments: { taskId: string; workspaceId: string };
   Notifications: undefined;
+  PrivacyPolicy: undefined;
+  TermsAndConditions: undefined;
+  FAQ: undefined;
+  AboutUs: undefined;
 };

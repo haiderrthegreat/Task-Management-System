@@ -11,6 +11,8 @@ import StackNavigator from './app/navigation/StackNavigator';
 import { useAppDispatch, useAppSelector } from './app/store/hooks';
 import { store } from './app/store/index';
 import { clearAuth, setToken, setUser } from './app/store/slices/authSlice';
+import { initSocket, disconnectSocket } from './app/utils/socket';
+import { API } from './app/store/api';
 
 // Avoids Android native-screen bridge crashes from version drift while setup stabilizes.
 enableScreens(false);
@@ -60,6 +62,37 @@ const AppNavigator = () => {
       isMounted = false;
     };
   }, [dispatch]);
+
+  // Initialize socket when token becomes available and subscribe to invitation events
+  useEffect(() => {
+    let mounted = true;
+
+    const setupSocket = async () => {
+      if (!token) return;
+
+      const s = await initSocket(token);
+      if (!s || !mounted) return;
+
+      s.on('invitation:received', () => {
+        store.dispatch(API.util.invalidateTags(['Notifications']));
+      });
+
+      s.on('invitation:accepted', () => {
+        store.dispatch(API.util.invalidateTags(['Workspaces', 'Notifications']));
+      });
+
+      s.on('invitation:declined', () => {
+        store.dispatch(API.util.invalidateTags(['Notifications']));
+      });
+    };
+
+    setupSocket();
+
+    return () => {
+      mounted = false;
+      disconnectSocket();
+    };
+  }, [token]);
 
   if (isHydratingAuth) {
     return (

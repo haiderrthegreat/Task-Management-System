@@ -63,6 +63,18 @@ const changeRoleSchema = z.object({
   }),
 });
 
+const acceptInvitationSchema = z.object({
+  invitationId: z
+    .string({ required_error: "Invitation ID is required" })
+    .min(1, "Invitation ID is required"),
+});
+
+const declineInvitationSchema = z.object({
+  invitationId: z
+    .string({ required_error: "Invitation ID is required" })
+    .min(1, "Invitation ID is required"),
+});
+
 module.exports = {
   createWorkspaceSchema,
   updateWorkspaceSchema,
@@ -70,4 +82,6 @@ module.exports = {
   acceptInviteSchema,
   removeMemberSchema,
   changeRoleSchema,
+  acceptInvitationSchema,
+  declineInvitationSchema,
 };

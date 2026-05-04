@@ -2,12 +2,10 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useNavigation } from '@react-navigation/native';
 import { useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Feather } from '@expo/vector-icons'; // Assuming you are using Expo or have this installed
 
-import AppCard from '../components/AppCard';
-import Avatar from '../components/Avatar';
 import Screen from '../components/Screen';
-import { taskflowRepository } from '../data/taskflowRepository';
 import { RootStackParamList } from '../navigation/types';
 import { API, useLogoutMutation } from '../store/api';
 import { useAppDispatch } from '../store/hooks';
@@ -16,8 +14,6 @@ import { clearAuth } from '../store/slices/authSlice';
 const ProfileScreen = () => {
   const dispatch = useAppDispatch();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-  const tasks = taskflowRepository.getTasks();
-  const workspaces = taskflowRepository.getWorkspaces();
   const [logout] = useLogoutMutation();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
@@ -49,76 +45,163 @@ const ProfileScreen = () => {
 
   return (
     <Screen disableTopInset>
-      <AppCard>
-        <View style={styles.profileRow}>
-          <Avatar name="Noah Kim" size={52} />
-          <View>
-            <Text style={styles.name}>Noah Kim</Text>
-            <Text style={styles.role}>Project Manager</Text>
+      <View style={styles.container}>
+
+        <TouchableOpacity style={styles.card} onPress={() => navigation.navigate('Notifications')}>
+          <View style={styles.cardLeft}>
+            <View style={[styles.iconContainer, { backgroundColor: '#E0F2FE' }]}>
+              <Feather name="bell" size={22} color="#0284C7" />
+            </View>
+            <View>
+              <Text style={styles.cardTitle}>Notifications</Text>
+              <Text style={styles.cardSubtitle}>Alerts & reminders</Text>
+            </View>
           </View>
-        </View>
-      </AppCard>
+          <View style={styles.chevronContainer}>
+            <Feather name="chevron-right" size={16} color="#64748B" />
+          </View>
+        </TouchableOpacity>
 
-      <View style={styles.grid}>
-        <AppCard>
-          <Text style={styles.metric}>{tasks.length}</Text>
-          <Text style={styles.metricLabel}>Assigned Tasks</Text>
-        </AppCard>
-        <AppCard>
-          <Text style={styles.metric}>{workspaces.length}</Text>
-          <Text style={styles.metricLabel}>Workspaces</Text>
-        </AppCard>
+        <TouchableOpacity style={styles.card} onPress={() => navigation.navigate('PrivacyPolicy')}>
+          <View style={styles.cardLeft}>
+            <View style={[styles.iconContainer, { backgroundColor: '#F3E8FF' }]}>
+              <Feather name="lock" size={22} color="#9333EA" />
+            </View>
+            <View>
+              <Text style={styles.cardTitle}>Privacy Policy</Text>
+              <Text style={styles.cardSubtitle}>How we use your data</Text>
+            </View>
+          </View>
+          <View style={styles.chevronContainer}>
+            <Feather name="chevron-right" size={16} color="#64748B" />
+          </View>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.card} onPress={() => navigation.navigate('TermsAndConditions')}>
+          <View style={styles.cardLeft}>
+            <View style={[styles.iconContainer, { backgroundColor: '#DCFCE7' }]}>
+              <Feather name="file-text" size={22} color="#16A34A" />
+            </View>
+            <View>
+              <Text style={styles.cardTitle}>Terms and Conditions</Text>
+              <Text style={styles.cardSubtitle}>Usage agreement</Text>
+            </View>
+          </View>
+          <View style={styles.chevronContainer}>
+            <Feather name="chevron-right" size={16} color="#64748B" />
+          </View>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.card} onPress={() => navigation.navigate('FAQ')}>
+          <View style={styles.cardLeft}>
+            <View style={[styles.iconContainer, { backgroundColor: '#FEF9C3' }]}>
+              <Feather name="help-circle" size={22} color="#CA8A04" />
+            </View>
+            <View>
+              <Text style={styles.cardTitle}>FAQ</Text>
+              <Text style={styles.cardSubtitle}>Common questions</Text>
+            </View>
+          </View>
+          <View style={styles.chevronContainer}>
+            <Feather name="chevron-right" size={16} color="#64748B" />
+          </View>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.card} onPress={() => navigation.navigate('AboutUs')}>
+          <View style={styles.cardLeft}>
+            <View style={[styles.iconContainer, { backgroundColor: '#F5F3FF' }]}>
+              <Feather name="info" size={22} color="#8B5CF6" />
+            </View>
+            <View>
+              <Text style={styles.cardTitle}>About Us</Text>
+              <Text style={styles.cardSubtitle}>Our story & mission</Text>
+            </View>
+          </View>
+          <View style={styles.chevronContainer}>
+            <Feather name="chevron-right" size={16} color="#64748B" />
+          </View>
+        </TouchableOpacity>
+  
+        <TouchableOpacity 
+          style={[styles.card, styles.logoutCard]} 
+          onPress={handleLogout} 
+          disabled={isLoggingOut}
+        >
+          <View style={styles.cardLeft}>
+            <View style={[styles.iconContainer, { backgroundColor: '#FEE2E2' }]}>
+              <Feather name="log-out" size={22} color="#DC2626" />
+            </View>
+            <Text style={styles.logoutText}>
+              {isLoggingOut ? 'Logging out...' : 'Logout'}
+            </Text>
+          </View>
+        </TouchableOpacity>
       </View>
-
-      <AppCard>
-        <Pressable style={styles.linkRow} onPress={() => navigation.navigate('Notifications')}>
-          <Text style={styles.linkText}>Notifications</Text>
-        </Pressable>
-        <Pressable style={styles.linkRow} onPress={() => navigation.navigate('MainTabs', { screen: 'Workspace' })}>
-          <Text style={styles.linkText}>Workspace List</Text>
-        </Pressable>
-        <Pressable style={styles.linkRow} onPress={handleLogout} disabled={isLoggingOut}>
-          <Text style={styles.linkText}>{isLoggingOut ? 'Logging out...' : 'Logout'}</Text>
-        </Pressable>
-      </AppCard>
     </Screen>
   );
 };
 
 const styles = StyleSheet.create({
-  profileRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
+  container: {
+    padding: 2,
   },
-  name: {
-    fontSize: 18,
+  settingsTitle: {
+    fontSize: 28,
     fontWeight: '700',
     color: '#0F172A',
+    marginBottom: 20,
+    marginTop: 10,
   },
-  role: {
-    color: '#64748B',
-  },
-  grid: {
+  card: {
     flexDirection: 'row',
-    gap: 8,
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 12,
+    // borderWidth: 1,
+    // borderColor: '#E2E8F0',
+    borderRadius: 16,
+    marginBottom: 15,
+    backgroundColor: '#FFFFFF',
   },
-  metric: {
-    fontSize: 24,
-    fontWeight: '800',
+  cardLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  iconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 16,
+  },
+  cardTitle: {
+    fontSize: 16,
+    fontWeight: '600',
     color: '#0F172A',
   },
-  metricLabel: {
+  cardSubtitle: {
+    fontSize: 13,
     color: '#64748B',
+    marginTop: 2,
   },
-  linkRow: {
-    paddingVertical: 12,
-    borderTopWidth: 1,
-    borderTopColor: '#E2E8F0',
+  chevronContainer: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#F1F5F9',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  linkText: {
-    color: '#0F766E',
+  logoutCard: {
+    backgroundColor: '#FEF2F2',
+    borderColor: '#FECACA',
+    marginTop: 8, // slight extra gap before logout if desired
+  },
+  logoutText: {
+    fontSize: 16,
     fontWeight: '600',
+    color: '#DC2626',
   },
 });
 

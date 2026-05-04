@@ -406,6 +406,272 @@ const acceptInviteFromLink = async (token) => {
   };
 };
 
+// ─── Invitation Notifications (New In-App System) ────────────────────────────
+
+/**
+ * Create a workspace invitation as a notification
+ * Replace email-based invitation with in-app notification
+ */
+const createInvitation = async (workspaceId, inviterId, inviteeEmail) => {
+  const workspace = await getActiveWorkspace(workspaceId);
+  if (!workspace) throw createError("Workspace not found", 404);
+
+  // Find the invitee by email
+  const invitee = await prisma.user.findUnique({
+    where: { email: inviteeEmail.toLowerCase() },
+    select: { id: true, email: true, name: true },
+  });
+
+  if (!invitee) {
+    throw createError("No user found with this email address. Please ask them to sign up first.", 404);
+  }
+
+  const existingMembership = await getMembership(workspaceId, invitee.id);
+  if (existingMembership) {
+    throw createError("User is already a member of this workspace", 409);
+  }
+
+  // Check if invitation already exists and is pending
+  const existingInvitation = await prisma.workspaceInvitation.findFirst({
+    where: {
+      workspaceId,
+      inviteeId: invitee.id,
+      status: "PENDING",
+    },
+  });
+
+  if (existingInvitation) {
+    throw createError("Invitation already sent to this user", 409);
+  }
+
+  // Create the invitation record
+  const invitation = await prisma.workspaceInvitation.create({
+    data: {
+      workspaceId,
+      inviterId,
+      inviteeId: invitee.id,
+      inviteeEmail: invitee.email.toLowerCase(),
+      status: "PENDING",
+    },
+    include: {
+      workspace: { select: { id: true, name: true } },
+      inviter: { select: { id: true, name: true, email: true } },
+      invitee: { select: { id: true, name: true, email: true } },
+    },
+  });
+
+  // Emit Socket.io event to the invitee's notification room
+  const { emitToUser } = require("../config/socket");
+  emitToUser(invitee.id, "invitation:received", {
+    id: invitation.id,
+    workspaceId: invitation.workspaceId,
+    workspaceName: invitation.workspace.name,
+    inviterName: invitation.inviter.name,
+    message: `${invitation.inviter.name} invited you to join "${invitation.workspace.name}"`,
+  });
+
+  return {
+    id: invitation.id,
+    message: `Invitation sent to ${invitee.email}`,
+  };
+};
+
+/**
+ * Get all invitations for a user (notifications inbox)
+ */
+const getInvitationsByUser = async (userId) => {
+  const invitations = await prisma.workspaceInvitation.findMany({
+    where: {
+      inviteeId: userId,
+    },
+    include: {
+      workspace: { select: { id: true, name: true, description: true } },
+      inviter: { select: { id: true, name: true, email: true } },
+    },
+    orderBy: { createdAt: "desc" },
+  });
+
+  return invitations.map((inv) => ({
+    id: inv.id,
+    workspaceId: inv.workspace.id,
+    workspaceName: inv.workspace.name,
+    workspaceDescription: inv.workspace.description,
+    inviterName: inv.inviter.name,
+    inviterEmail: inv.inviter.email,
+    message: `${inv.inviter.name} invited you to join "${inv.workspace.name}"`,
+    status: inv.status,
+    isRead: inv.isRead,
+    respondedAt: inv.respondedAt,
+    createdAt: inv.createdAt,
+  }));
+};
+
+/**
+ * Get a single invitation
+ */
+const getInvitationById = async (invitationId, userId) => {
+  const invitation = await prisma.workspaceInvitation.findUnique({
+    where: { id: invitationId },
+    include: {
+      workspace: { select: { id: true, name: true, description: true } },
+      inviter: { select: { id: true, name: true, email: true } },
+    },
+  });
+
+  if (!invitation) throw createError("Invitation not found", 404);
+
+  if (invitation.inviteeId !== userId) {
+    throw createError("This invitation does not belong to you", 403);
+  }
+
+  return {
+    id: invitation.id,
+    workspaceId: invitation.workspace.id,
+    workspaceName: invitation.workspace.name,
+    workspaceDescription: invitation.workspace.description,
+    inviterName: invitation.inviter.name,
+    inviterEmail: invitation.inviter.email,
+    message: `${invitation.inviter.name} invited you to join "${invitation.workspace.name}"`,
+    status: invitation.status,
+    isRead: invitation.isRead,
+    respondedAt: invitation.respondedAt,
+    createdAt: invitation.createdAt,
+  };
+};
+
+/**
+ * Mark an invitation as read
+ */
+const markInvitationAsRead = async (invitationId, userId) => {
+  const invitation = await prisma.workspaceInvitation.findUnique({
+    where: { id: invitationId },
+  });
+
+  if (!invitation) throw createError("Invitation not found", 404);
+
+  if (invitation.inviteeId !== userId) {
+    throw createError("This invitation does not belong to you", 403);
+  }
+
+  const updated = await prisma.workspaceInvitation.update({
+    where: { id: invitationId },
+    data: { isRead: true },
+  });
+
+  return { success: true, isRead: updated.isRead };
+};
+
+/**
+ * Accept an invitation and add user to workspace
+ */
+const acceptInvitation = async (invitationId, userId) => {
+  const invitation = await prisma.workspaceInvitation.findUnique({
+    where: { id: invitationId },
+    include: {
+      workspace: true,
+      inviter: { select: { id: true, name: true } },
+    },
+  });
+
+  if (!invitation) throw createError("Invitation not found", 404);
+
+  if (invitation.inviteeId !== userId) {
+    throw createError("This invitation does not belong to you", 403);
+  }
+
+  if (invitation.status !== "PENDING") {
+    throw createError(`Invitation is already ${invitation.status.toLowerCase()}`, 400);
+  }
+
+  // Check workspace still exists
+  const workspace = await getActiveWorkspace(invitation.workspaceId);
+  if (!workspace) throw createError("Workspace no longer exists", 404);
+
+  // Add user to workspace as member
+  const membershipResult = await prisma.$transaction(async (tx) => {
+    // Update invitation status
+    await tx.workspaceInvitation.update({
+      where: { id: invitationId },
+      data: {
+        status: "ACCEPTED",
+        isRead: true,
+        respondedAt: new Date(),
+      },
+    });
+
+    // Create workspace member
+    const membership = await tx.workspaceMember.create({
+      data: {
+        workspaceId: invitation.workspaceId,
+        userId,
+        role: "MEMBER",
+      },
+      include: {
+        user: { select: { id: true, name: true, email: true } },
+      },
+    });
+
+    return membership;
+  });
+
+  // Notify the inviter via Socket.io
+  const { emitToUser } = require("../config/socket");
+  emitToUser(invitation.inviterId, "invitation:accepted", {
+    workspaceId: invitation.workspaceId,
+    workspaceName: workspace.name,
+    acceptedByName: membershipResult.user.name,
+    message: `${membershipResult.user.name} accepted your invitation to "${workspace.name}"`,
+  });
+
+  return {
+    id: membershipResult.id,
+    role: membershipResult.role,
+    user: membershipResult.user,
+  };
+};
+
+/**
+ * Decline an invitation
+ */
+const declineInvitation = async (invitationId, userId) => {
+  const invitation = await prisma.workspaceInvitation.findUnique({
+    where: { id: invitationId },
+    include: {
+      workspace: { select: { id: true, name: true } },
+      inviter: { select: { id: true, name: true } },
+    },
+  });
+
+  if (!invitation) throw createError("Invitation not found", 404);
+
+  if (invitation.inviteeId !== userId) {
+    throw createError("This invitation does not belong to you", 403);
+  }
+
+  if (invitation.status !== "PENDING") {
+    throw createError(`Invitation is already ${invitation.status.toLowerCase()}`, 400);
+  }
+
+  const updated = await prisma.workspaceInvitation.update({
+    where: { id: invitationId },
+    data: {
+      status: "DECLINED",
+      isRead: true,
+      respondedAt: new Date(),
+    },
+  });
+
+  // Notify the inviter via Socket.io
+  const { emitToUser } = require("../config/socket");
+  emitToUser(invitation.inviterId, "invitation:declined", {
+    workspaceId: invitation.workspace.id,
+    workspaceName: invitation.workspace.name,
+    message: `An invitation to "${invitation.workspace.name}" was declined`,
+  });
+
+  return { success: true, status: updated.status };
+};
+
 // ─── Exports ──────────────────────────────────────────────────────────────────
 
 module.exports = {
@@ -419,4 +685,10 @@ module.exports = {
   inviteMember,
   acceptInvite,
   acceptInviteFromLink,
+  createInvitation,
+  getInvitationsByUser,
+  getInvitationById,
+  markInvitationAsRead,
+  acceptInvitation,
+  declineInvitation,
 };

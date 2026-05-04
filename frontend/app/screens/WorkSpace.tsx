@@ -3,6 +3,8 @@ import { useNavigation } from "@react-navigation/native";
 import {
   ActivityIndicator,
   Alert,
+  RefreshControl,
+  ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -40,12 +42,20 @@ const TeamsScreen = () => {
   const navigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList>>();
 
-  const { data: workspaces, isLoading } = useGetAllWorkspacesQuery(undefined, {
+  const {
+    data: workspaces,
+    isLoading,
+    isFetching,
+    refetch,
+  } = useGetAllWorkspacesQuery(undefined, {
     refetchOnMountOrArgChange: true,
     refetchOnFocus: true,
   });
 
   const [deleteWorkspace] = useDeleteWorkspaceMutation();
+
+  const isRefreshing = isFetching && !isLoading;
+  const hasData = workspaces && workspaces.length > 0;
 
   const handleDeleteWorkspace = (id: string, name: string) => {
     Alert.alert(
@@ -62,7 +72,10 @@ const TeamsScreen = () => {
             } catch (error) {
               Alert.alert(
                 "Delete failed",
-                getApiErrorMessage(error, "Unable to delete workspace right now.")
+                getApiErrorMessage(
+                  error,
+                  "Unable to delete workspace right now."
+                )
               );
             }
           },
@@ -74,120 +87,163 @@ const TeamsScreen = () => {
   return (
     <View style={styles.root}>
       <Screen disableTopInset>
-        {/* LOADING */}
-        {isLoading && (
+
+        {/* INITIAL LOADING */}
+        {isLoading ? (
           <View style={styles.center}>
             <ActivityIndicator size="large" color="#0F766E" />
             <Text style={styles.loadingText}>Loading workspaces…</Text>
           </View>
-        )}
+        ) : (
+          <ScrollView
+            style={{ flex: 1 }}
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={[
+              styles.scrollContent,
+              !hasData && styles.scrollEmpty,
+            ]}
+            refreshControl={
+              <RefreshControl
+                refreshing={isRefreshing}
+                onRefresh={refetch}
+                tintColor="#0F766E"
+                colors={["#0F766E"]}
+                progressViewOffset={40}
+              />
+            }
+          >
 
-        {/* EMPTY STATE */}
-        {!isLoading && (!workspaces || workspaces.length === 0) && (
-          <View style={styles.center}>
-            <View style={styles.emptyWrap}>
-              <Text style={styles.emptyEmoji}>🗂</Text>
-            </View>
-            <Text style={styles.emptyTitle}>No workspaces yet</Text>
-            <Text style={styles.emptyBody}>
-              Tap the + button to create your first workspace.
-            </Text>
-          </View>
-        )}
-
-        {/* WORKSPACE CARDS */}
-        {!isLoading &&
-          workspaces?.map((workspace) => {
-            const accent = getAccentColor(workspace.id);
-            const tint = hexToTint(accent);
-            const roleStyle = getRoleStyle(workspace.role);
-            const initial = workspace.name?.trim()?.[0]?.toUpperCase() ?? "?";
-
-            return (
-              <TouchableOpacity
-                key={workspace.id}
-                activeOpacity={0.85}
-                onPress={() =>
-                  navigation.navigate("WorkspaceDetail", {
-                    workspaceId: workspace.id,
-                    workspaceName: workspace.name,
-                    // workspaceDescription: workspace.description,
-                    workspaceRole: workspace.role,
-                  })
-                }
-                style={styles.cardWrap}
-              >
-                {/* TOP BAR */}
-                <View style={[styles.topBar, { backgroundColor: accent }]} />
-
-                <View style={styles.cardBody}>
-                  {/* HEADER */}
-                  <View style={styles.headerRow}>
-                    <View style={[styles.avatar, { backgroundColor: tint }]}>
-                      <Text style={[styles.avatarText, { color: accent }]}>
-                        {initial}
-                      </Text>
-                    </View>
-
-                    <View style={styles.infoBlock}>
-                      <Text style={styles.workspaceName} numberOfLines={1}>
-                        {workspace.name}
-                      </Text>
-                      <Text
-                        style={[
-                          styles.description,
-                          !workspace.description?.trim() && styles.descriptionEmpty,
-                        ]}
-                        numberOfLines={1}
-                      >
-                        {workspace.description?.trim() || "No description available"}
-                      </Text>
-                    </View>
-
-                    <View style={[styles.rolePill, { backgroundColor: roleStyle.bg }]}>
-                      <Text style={[styles.roleText, { color: roleStyle.text }]}>
-                        {workspace.role}
-                      </Text>
-                    </View>
-                  </View>
-
-                  {/* DIVIDER */}
-                  <View style={styles.divider} />
-
-                  {/* FOOTER */}
-                  <View style={styles.footer}>
-                    <View style={styles.footerLeft}>
-                      <Avatar name={workspace.name} size={22} />
-                    </View>
-
-                    <View style={styles.actionsRow}>
-                      <TouchableOpacity
-                        style={[styles.actionBtn, styles.editBtn]}
-                        onPress={() =>
-                          navigation.navigate("CreateWorkspace", {
-                            workspaceId: workspace.id,
-                            name: workspace.name,
-                            description: workspace.description,
-                          })
-                        }
-                      >
-                        <Text style={styles.actionBtnText}>Edit</Text>
-                      </TouchableOpacity>
-
-                      <TouchableOpacity
-                        style={[styles.actionBtn, styles.deleteBtn]}
-                        onPress={() =>
-                          handleDeleteWorkspace(workspace.id, workspace.name)
-                        }
-                      >
-                        <Text style={styles.actionBtnText}>Delete</Text>
-                      </TouchableOpacity>
-                    </View>
-                  </View>
+            {/* EMPTY STATE */}
+            {!hasData ? (
+              <View style={styles.center}>
+                <View style={styles.emptyWrap}>
+                  <Text style={styles.emptyEmoji}>🗂</Text>
                 </View>
-              </TouchableOpacity>
-            );
-          })}
+                <Text style={styles.emptyTitle}>No workspaces yet</Text>
+                <Text style={styles.emptyBody}>
+                  Pull down to refresh, or tap + to create your first workspace.
+                </Text>
+              </View>
+            ) : (
+              <>
+                {/* WORKSPACE CARDS */}
+                {workspaces?.map((workspace) => {
+                  const accent = getAccentColor(workspace.id);
+                  const tint = hexToTint(accent);
+                  const roleStyle = getRoleStyle(workspace.role);
+                  const initial =
+                    workspace.name?.trim()?.[0]?.toUpperCase() ?? "?";
+
+                  return (
+                    <TouchableOpacity
+                      key={workspace.id}
+                      activeOpacity={0.85}
+                      onPress={() =>
+                        navigation.navigate("WorkspaceDetail", {
+                          workspaceId: workspace.id,
+                          workspaceName: workspace.name,
+                          workspaceRole: workspace.role,
+                        })
+                      }
+                      style={styles.cardWrap}
+                    >
+                      <View
+                        style={[styles.topBar, { backgroundColor: accent }]}
+                      />
+
+                      <View style={styles.cardBody}>
+                        <View style={styles.headerRow}>
+                          <View
+                            style={[styles.avatar, { backgroundColor: tint }]}
+                          >
+                            <Text
+                              style={[styles.avatarText, { color: accent }]}
+                            >
+                              {initial}
+                            </Text>
+                          </View>
+
+                          <View style={styles.infoBlock}>
+                            <Text
+                              style={styles.workspaceName}
+                              numberOfLines={1}
+                            >
+                              {workspace.name}
+                            </Text>
+                            <Text
+                              style={[
+                                styles.description,
+                                !workspace.description?.trim() &&
+                                  styles.descriptionEmpty,
+                              ]}
+                              numberOfLines={1}
+                            >
+                              {workspace.description?.trim() ||
+                                "No description available"}
+                            </Text>
+                          </View>
+
+                          <View
+                            style={[
+                              styles.rolePill,
+                              { backgroundColor: roleStyle.bg },
+                            ]}
+                          >
+                            <Text
+                              style={[
+                                styles.roleText,
+                                { color: roleStyle.text },
+                              ]}
+                            >
+                              {workspace.role}
+                            </Text>
+                          </View>
+                        </View>
+
+                        <View style={styles.divider} />
+
+                        <View style={styles.footer}>
+                          <View style={styles.footerLeft}>
+                            <Avatar name={workspace.name} size={22} />
+                          </View>
+
+                          <View style={styles.actionsRow}>
+                            <TouchableOpacity
+                              style={[styles.actionBtn, styles.editBtn]}
+                              onPress={() =>
+                                navigation.navigate("CreateWorkspace", {
+                                  workspaceId: workspace.id,
+                                  name: workspace.name,
+                                  description: workspace.description,
+                                })
+                              }
+                            >
+                              <Text style={styles.actionBtnText}>Edit</Text>
+                            </TouchableOpacity>
+
+                            <TouchableOpacity
+                              style={[styles.actionBtn, styles.deleteBtn]}
+                              onPress={() =>
+                                handleDeleteWorkspace(
+                                  workspace.id,
+                                  workspace.name
+                                )
+                              }
+                            >
+                              <Text style={styles.actionBtnText}>
+                                Delete
+                              </Text>
+                            </TouchableOpacity>
+                          </View>
+                        </View>
+                      </View>
+                    </TouchableOpacity>
+                  );
+                })}
+              </>
+            )}
+          </ScrollView>
+        )}
       </Screen>
 
       {/* FLOATING BUTTON */}
@@ -209,8 +265,16 @@ export default TeamsScreen;
 const styles = StyleSheet.create({
   root: { flex: 1 },
 
+  scrollContent: {
+    paddingBottom: 100,
+  },
+
+  scrollEmpty: {
+    flexGrow: 1,
+    justifyContent: "center",
+  },
+
   center: {
-    flex: 1,
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: 32,
@@ -247,7 +311,6 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
 
-  /* CARD */
   cardWrap: {
     backgroundColor: "#fff",
     borderRadius: 16,
@@ -360,7 +423,6 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
 
-  /* FAB */
   fab: {
     position: "absolute",
     bottom: 28,

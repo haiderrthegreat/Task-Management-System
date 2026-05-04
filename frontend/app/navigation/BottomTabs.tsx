@@ -33,7 +33,7 @@ const BottomTabs = () => {
         headerTitleAlign: 'center',
         headerShadowVisible: false,
         headerStyle: { backgroundColor: '#F8FAFC' },
-        sceneStyle: { backgroundColor: '#F8FAFC' },
+        sceneStyle: { backgroundColor: '#FFFFFF' },
         title: route.name,
         tabBarActiveTintColor: '#4F6F73',
         tabBarInactiveTintColor: '#94A3B8',
@@ -48,7 +48,15 @@ const BottomTabs = () => {
         ),
       })}
     >
-      <Tab.Screen name="Home" component={HomeScreen} />
+      <Tab.Screen 
+        name="Home" 
+        component={HomeScreen}
+        options={{
+          headerShown: false,
+          sceneStyle: { backgroundColor: '#FFFFFF' },
+          cardStyle: { backgroundColor: '#FFFFFF' },
+        }}
+      />
       <Tab.Screen name="Tasks" component={TasksScreen} />
       <Tab.Screen name="Workspace" component={TeamsScreen} />
       <Tab.Screen name="Profile" component={ProfileScreen} />

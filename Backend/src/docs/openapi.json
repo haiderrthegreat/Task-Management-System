@@ -42,6 +42,10 @@
     {
       "name": "Attachments",
       "description": "Task file attachment upload, download, and management"
+    },
+    {
+      "name": "Notifications",
+      "description": "Workspace invitation notifications and in-app notifications"
     }
   ],
   "paths": {
@@ -931,6 +935,315 @@
           },
           "404": {
             "description": "Workspace no longer exists",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/workspaces/notifications": {
+      "get": {
+        "tags": ["Notifications"],
+        "summary": "Get all workspace invitations (notification inbox)",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Invitations fetched successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvitationsListResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/workspaces/notifications/{invitationId}": {
+      "get": {
+        "tags": ["Notifications"],
+        "summary": "Get a specific invitation",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "invitationId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the invitation"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Invitation fetched successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvitationResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Invitation does not belong to this user",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Invitation not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/workspaces/notifications/{invitationId}/read": {
+      "patch": {
+        "tags": ["Notifications"],
+        "summary": "Mark invitation as read",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "invitationId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the invitation"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Invitation marked as read",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Invitation does not belong to this user",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Invitation not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/workspaces/notifications/{invitationId}/accept": {
+      "post": {
+        "tags": ["Notifications"],
+        "summary": "Accept a workspace invitation",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "invitationId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the invitation"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Invitation accepted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkspaceMemberResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invitation is not pending or other validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Invitation does not belong to this user",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Invitation or workspace not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/workspaces/notifications/{invitationId}/decline": {
+      "post": {
+        "tags": ["Notifications"],
+        "summary": "Decline a workspace invitation",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "invitationId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "ID of the invitation"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Invitation declined",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuccessResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invitation is not pending or other validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Invitation does not belong to this user",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Invitation not found",
             "content": {
               "application/json": {
                 "schema": {
@@ -2177,6 +2490,58 @@
                     "required": ["message"]
                   }
                 ]
+              }
+            },
+            "required": ["data"]
+          }
+        ]
+      },
+      "InvitationStatus": {
+        "type": "string",
+        "enum": ["PENDING", "ACCEPTED", "DECLINED", "EXPIRED"],
+        "example": "PENDING"
+      },
+      "Invitation": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string", "example": "ckz7x4u3p0000inv001" },
+          "workspaceId": { "type": "string", "example": "ckz7x4u3p0000ws001" },
+          "workspaceName": { "type": "string", "example": "My Workspace" },
+          "workspaceDescription": { "type": "string", "nullable": true, "example": "A great workspace" },
+          "inviterName": { "type": "string", "example": "John Owner" },
+          "inviterEmail": { "type": "string", "format": "email", "example": "owner@example.com" },
+          "status": { "$ref": "#/components/schemas/InvitationStatus" },
+          "isRead": { "type": "boolean", "example": false },
+          "respondedAt": { "type": "string", "format": "date-time", "nullable": true },
+          "createdAt": { "type": "string", "format": "date-time" }
+        },
+        "required": ["id", "workspaceId", "workspaceName", "inviterName", "inviterEmail", "status", "isRead", "createdAt"]
+      },
+      "InvitationResponse": {
+        "allOf": [
+          { "$ref": "#/components/schemas/SuccessResponse" },
+          {
+            "type": "object",
+            "properties": {
+              "data": {
+                "$ref": "#/components/schemas/Invitation"
+              }
+            },
+            "required": ["data"]
+          }
+        ]
+      },
+      "InvitationsListResponse": {
+        "allOf": [
+          { "$ref": "#/components/schemas/SuccessResponse" },
+          {
+            "type": "object",
+            "properties": {
+              "data": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/Invitation"
+                }
               }
             },
             "required": ["data"]

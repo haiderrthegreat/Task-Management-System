@@ -146,9 +146,15 @@ const inviteMemberHandler = async (req, res, next) => {
     const requesterId = req.user.sub;
     const { email } = req.validatedData;
 
-    const result = await workspaceService.inviteMember(workspaceId, requesterId, email);
+    // Create an in-app invitation (notification) instead of sending only an email.
+    // This stores a workspace_invitations row that the invited user can fetch.
+    const result = await workspaceService.createInvitation(
+      workspaceId,
+      requesterId,
+      email,
+    );
 
-    return sendSuccess(res, 200, result.message);
+    return sendSuccess(res, 200, result.message, { id: result.id });
   } catch (error) {
     next(error);
   }
@@ -187,6 +193,89 @@ const acceptInviteFromLinkHandler = async (req, res, next) => {
   }
 };
 
+/**
+ * GET /api/notifications
+ * Get all invitations for the logged-in user (inbox)
+ */
+const getInvitationsHandler = async (req, res, next) => {
+  try {
+    const userId = req.user.sub;
+    const invitations = await workspaceService.getInvitationsByUser(userId);
+
+    return sendSuccess(res, 200, "Invitations fetched successfully", invitations);
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * GET /api/notifications/:invitationId
+ * Get a single invitation by ID
+ */
+const getInvitationHandler = async (req, res, next) => {
+  try {
+    const { invitationId } = req.params;
+    const userId = req.user.sub;
+
+    const invitation = await workspaceService.getInvitationById(invitationId, userId);
+
+    return sendSuccess(res, 200, "Invitation fetched successfully", invitation);
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * PATCH /api/notifications/:invitationId/read
+ * Mark an invitation as read
+ */
+const markInvitationReadHandler = async (req, res, next) => {
+  try {
+    const { invitationId } = req.params;
+    const userId = req.user.sub;
+
+    const result = await workspaceService.markInvitationAsRead(invitationId, userId);
+
+    return sendSuccess(res, 200, "Invitation marked as read", result);
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * POST /api/notifications/:invitationId/accept
+ * Accept an invitation
+ */
+const acceptInvitationHandler = async (req, res, next) => {
+  try {
+    const { invitationId } = req.params;
+    const userId = req.user.sub;
+
+    const result = await workspaceService.acceptInvitation(invitationId, userId);
+
+    return sendSuccess(res, 200, "Invitation accepted successfully", result);
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * POST /api/notifications/:invitationId/decline
+ * Decline an invitation
+ */
+const declineInvitationHandler = async (req, res, next) => {
+  try {
+    const { invitationId } = req.params;
+    const userId = req.user.sub;
+
+    const result = await workspaceService.declineInvitation(invitationId, userId);
+
+    return sendSuccess(res, 200, "Invitation declined", result);
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   createWorkspace,
   getAllWorkspaces,
@@ -198,4 +287,9 @@ module.exports = {
   inviteMemberHandler,
   acceptInviteFromLinkHandler,
   acceptInviteHandler,
+  getInvitationsHandler,
+  getInvitationHandler,
+  markInvitationReadHandler,
+  acceptInvitationHandler,
+  declineInvitationHandler,
 };

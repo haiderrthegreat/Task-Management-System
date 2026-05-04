@@ -41,6 +41,12 @@ const initSocket = (httpServer) => {
   io.on("connection", (socket) => {
     console.log(`🔌 Socket connected: ${socket.id} (user: ${socket.user.sub})`);
 
+    // Join user-specific notification room
+    // Allows sending notifications to specific users
+    const userRoom = `user:${socket.user.sub}`;
+    socket.join(userRoom);
+    console.log(`👤 User ${socket.user.sub} joined user room: ${userRoom}`);
+
     // Join workspace room
     // Client emits: socket.emit("join:workspace", workspaceId)
     socket.on("join:workspace", async (workspaceId) => {
@@ -111,4 +117,20 @@ const emitToWorkspace = (workspaceId, event, data) => {
   }
 };
 
-module.exports = { initSocket, getIO, emitToWorkspace };
+/**
+ * Emit event to a specific user's notification room
+ * @param {string} userId
+ * @param {string} event
+ * @param {object} data
+ */
+const emitToUser = (userId, event, data) => {
+  try {
+    const ioInstance = getIO();
+    ioInstance.to(`user:${userId}`).emit(event, data);
+  } catch (err) {
+    // Don't crash if socket not initialized
+    console.error("Socket emit error:", err.message);
+  }
+};
+
+module.exports = { initSocket, getIO, emitToWorkspace, emitToUser };

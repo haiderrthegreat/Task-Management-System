@@ -5,6 +5,7 @@ import CommentsScreen from '../screens/CommentsScreen';
 import CreateWorkspaceScreen from '../screens/CreateWorkspaceScreen';
 import FileAttachmentsScreen from '../screens/FileAttachmentsScreen';
 import FilterSearchScreen from '../screens/FilterSearchScreen';
+import PrivacyPolicyScreen from '../screens/PrivacyPolicyScreen';
 // import GetStartedScreen from '../screens/GetStartedScreen';
 import InviteMemberScreen from '../screens/InviteMemberScreen';
 import NotificationsScreen from '../screens/NotificationsScreen';
@@ -12,6 +13,9 @@ import WorkspaceDetailScreen from '../screens/WorkspaceDetailScreen';
 import { CreateTaskScreen, LoginScreen, SignUpScreen } from '../screens';
 import BottomTabs from './BottomTabs';
 import { RootStackParamList } from './types';
+import TermsAndConditionsScreen from '../screens/TermsAndConditionsScreen';
+import FAQScreen from '../screens/FAQScreen';
+import AboutUsScreen from '../screens/AboutUsScreen';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -84,7 +88,27 @@ const StackNavigator = ({ initialRouteName = 'Login', navigatorKey }: StackNavig
       <Stack.Screen
         name="Notifications"
         component={NotificationsScreen}
-        options={{ title: 'Notifications' }}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="PrivacyPolicy"
+        component={PrivacyPolicyScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="TermsAndConditions"
+        component={TermsAndConditionsScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="FAQ"
+        component={FAQScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="AboutUs"
+        component={AboutUsScreen}
+        options={{ headerShown: false }}
       />
     </Stack.Navigator>
   );

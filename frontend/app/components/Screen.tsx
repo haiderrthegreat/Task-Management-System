@@ -13,15 +13,15 @@ const Screen = ({ children, style, disableTopInset = false }: ScreenProps) => {
   return (
     <SafeAreaView
       style={styles.safe}
-      edges={disableTopInset ? ['left', 'right'] : ['top', 'left', 'right']}
+      edges={['top', 'left', 'right', 'bottom']}
     >
       <ScrollView
         style={styles.scroll}
         contentContainerStyle={[
           styles.content,
           {
-            paddingTop: disableTopInset ? 0 : 1,
-            paddingBottom: insets.bottom + 20,
+            paddingTop: 1,
+            paddingBottom: 20,
           },
           style,
         ]}

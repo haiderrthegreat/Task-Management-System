@@ -12,6 +12,8 @@ const {
   acceptInviteSchema,
   removeMemberSchema,
   changeRoleSchema,
+  acceptInvitationSchema,
+  declineInvitationSchema,
 } = require("../validators/workspace.validator");
 
 const router = Router();
@@ -33,6 +35,39 @@ router.post(
   "/accept-invite",
   validate(acceptInviteSchema),
   workspaceController.acceptInviteHandler,
+);
+
+// ─── Notifications / Invitations (In-App System) ──────────────────────────────
+// NOTE: These must come BEFORE the /:workspaceId routes to avoid being caught by the catch-all
+
+// GET    /api/workspaces/notifications          → Get all invitations for user
+router.get(
+  "/notifications",
+  workspaceController.getInvitationsHandler,
+);
+
+// GET    /api/workspaces/notifications/:invitationId     → Get single invitation
+router.get(
+  "/notifications/:invitationId",
+  workspaceController.getInvitationHandler,
+);
+
+// PATCH  /api/workspaces/notifications/:invitationId/read   → Mark invitation as read
+router.patch(
+  "/notifications/:invitationId/read",
+  workspaceController.markInvitationReadHandler,
+);
+
+// POST   /api/workspaces/notifications/:invitationId/accept  → Accept invitation
+router.post(
+  "/notifications/:invitationId/accept",
+  workspaceController.acceptInvitationHandler,
+);
+
+// POST   /api/workspaces/notifications/:invitationId/decline → Decline invitation
+router.post(
+  "/notifications/:invitationId/decline",
+  workspaceController.declineInvitationHandler,
 );
 
 // ─── Workspace CRUD ───────────────────────────────────────────────────────────
